@@ -12,6 +12,7 @@
     "check": "tsc -b && npm test"
   },
   "dependencies": {
+    "@lobehub/icons-static-svg": "^1.95.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "simple-icons": "^16.31.0"

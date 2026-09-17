@@ -8,11 +8,17 @@ interface Props {
   onRemove: (job: string) => void;
   onShare: () => void;
   onDownload: () => void;
+  onAsk: () => void;
   shareLabel: string;
 }
 
-/** Nine slots, one per job. Clicking a filled slot empties it. */
-export function Hotbar({ stack, swapped, onRemove, onShare, onDownload, shareLabel }: Props) {
+/**
+ * Nine slots, one per job. The tile visits the tool's own site (a click on a
+ * brand mark is expected to do that); the small × removes it, so "learn more"
+ * and "discard" are two different, unambiguous targets instead of one
+ * overloaded click.
+ */
+export function Hotbar({ stack, swapped, onRemove, onShare, onDownload, onAsk, shareLabel }: Props) {
   const filled = JOBS.filter((j) => stack[j.id]).length;
 
   return (
@@ -31,12 +37,15 @@ export function Hotbar({ stack, swapped, onRemove, onShare, onDownload, shareLab
                 <span className="slot-label">{job.label}</span>
                 {tool ? (
                   <>
-                    <Tile tool={tool} />
-                    <button className="slot-tool" onClick={() => onRemove(job.id)}
-                            title={`Remove ${tool.name}`}
-                            aria-label={`Remove ${tool.name} from ${job.label}`}>
-                      {tool.name}
-                    </button>
+                    <div className="slot-tile">
+                      <a href={tool.url} target="_blank" rel="noopener noreferrer"
+                         title={`Visit ${tool.name}`} aria-label={`Visit ${tool.name}, opens in a new tab`}>
+                        <Tile tool={tool} />
+                      </a>
+                      <button className="slot-remove" onClick={() => onRemove(job.id)}
+                              aria-label={`Remove ${tool.name} from ${job.label}`}>×</button>
+                    </div>
+                    <span className="slot-tool">{tool.name}</span>
                   </>
                 ) : (
                   <>
@@ -51,6 +60,9 @@ export function Hotbar({ stack, swapped, onRemove, onShare, onDownload, shareLab
 
         <div className="hotbar-actions">
           <span className="count">{filled}/9</span>
+          <button className="btn" onClick={onAsk} disabled={!filled} title="Copy a prompt that explains this stack">
+            Explain it
+          </button>
           <button className="btn" onClick={onShare} disabled={!filled}>{shareLabel}</button>
           <button className="btn btn-primary" onClick={onDownload} disabled={!filled}>Save image</button>
         </div>

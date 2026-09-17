@@ -5,14 +5,16 @@ import { Tile } from './Tile.tsx';
 interface Props {
   query: string;
   filter: JobId | null;
+  freeOnly: boolean;
   stack: Stack;
   onPick: (tool: Tool) => void;
 }
 
-export function Shelf({ query, filter, stack, onPick }: Props) {
+export function Shelf({ query, filter, freeOnly, stack, onPick }: Props) {
   const q = query.trim().toLowerCase();
   const match = (t: Tool) =>
     (!filter || t.job === filter) &&
+    (!freeOnly || t.pricing === 'free' || t.oss) &&
     (!q || t.name.toLowerCase().includes(q) || t.note.toLowerCase().includes(q));
 
   const groups = JOBS.map((job) => ({
@@ -33,17 +35,34 @@ export function Shelf({ query, filter, stack, onPick }: Props) {
             {tools.map((tool) => {
               const chosen = stack[job.id] === tool.id;
               return (
-                <button
-                  className="item"
-                  key={tool.id}
-                  onClick={() => onPick(tool)}
-                  aria-pressed={chosen}
-                  aria-label={`${tool.name} — ${tool.note}${chosen ? ' (in your stack)' : ''}`}
-                >
-                  <Tile tool={tool} />
-                  <span className="item-name">{tool.name}</span>
-                  <span className="item-note">{tool.note}</span>
-                </button>
+                <div className="item-wrap" key={tool.id}>
+                  <button
+                    className="item"
+                    onClick={() => onPick(tool)}
+                    aria-pressed={chosen}
+                    aria-label={`${tool.name} — ${tool.note}${chosen ? ' (in your stack)' : ''}`}
+                  >
+                    <Tile tool={tool} />
+                    <span className="item-name">{tool.name}</span>
+                    {(tool.oss || tool.pricing === 'free') && (
+                      <span className="item-tag">{tool.oss ? 'open source' : 'free'}</span>
+                    )}
+                    <span className="item-note">{tool.note}</span>
+                  </button>
+                  {tool.url && (
+                    <a
+                      className="item-visit"
+                      href={tool.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`Visit ${tool.name}`}
+                      aria-label={`Visit ${tool.name}’s site, opens in a new tab`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      ↗
+                    </a>
+                  )}
+                </div>
               );
             })}
           </div>

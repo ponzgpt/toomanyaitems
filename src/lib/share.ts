@@ -4,7 +4,9 @@
  * its own, which a screenshot cannot give, and this way it costs no dependency.
  */
 import { JOBS, TOOLS, TOOL_BY_ID } from '../data/tools.ts';
-import { mark, monogram, onPaper } from './marks.ts';
+import { COMPUTE_BY_ID, NETWORK_BY_ID } from '../data/infra.ts';
+import { mark as lookupMark } from './marks.ts';
+import { monogram, onPaper } from './marks.ts';
 import type { Stack } from './stack.ts';
 
 const W = 1200, H = 630, PAD = 64;
@@ -56,7 +58,7 @@ export function renderCard(stack: Stack): HTMLCanvasElement {
 
     const size = 44;
     const ix = x + 20, iy = y + (ch - size) / 2;
-    if (tool) drawTile(ctx, tool.name, tool.si, ix, iy, size);
+    if (tool) drawTile(ctx, tool.name, tool.si, tool.logo, ix, iy, size);
 
     const tx = ix + size + 18;
     ctx.fillStyle = MUTED;
@@ -67,6 +69,16 @@ export function renderCard(stack: Stack): HTMLCanvasElement {
     ctx.font = `700 23px ${SANS}`;
     ctx.fillText(tool ? fit(ctx, tool.name, cw - (tx - x) - 18) : '—', tx, y + ch / 2 + 20);
   });
+
+  // Workbench: what it runs on, not a 10th job slot — a footer line under the grid.
+  const compute = stack.compute ? COMPUTE_BY_ID.get(stack.compute) : undefined;
+  const network = stack.network ? NETWORK_BY_ID.get(stack.network) : undefined;
+  if (compute || network) {
+    const bits = [compute && compute.name, network && `via ${network.name}`].filter(Boolean).join(' ');
+    ctx.fillStyle = MUTED;
+    ctx.font = `600 17px ${MONO}`;
+    ctx.fillText(`⚙ running on ${bits}`, PAD, H - PAD - 12);
+  }
 
   ctx.fillStyle = MUTED;
   ctx.font = `500 19px ${MONO}`;
@@ -79,19 +91,19 @@ export function renderCard(stack: Stack): HTMLCanvasElement {
   return canvas;
 }
 
-function drawTile(ctx: CanvasRenderingContext2D, name: string, si: string | null, x: number, y: number, s: number) {
+function drawTile(ctx: CanvasRenderingContext2D, name: string, si: string | null, logo: string | null, x: number, y: number, s: number) {
   ctx.save();
   ctx.beginPath(); ctx.roundRect(x, y, s, s, 9);
   ctx.fillStyle = PAPER2; ctx.fill();
   ctx.strokeStyle = RULE; ctx.lineWidth = 1; ctx.stroke();
 
-  const m = mark(si);
+  const m = lookupMark(si, logo);
   const inner = s * 0.58, off = (s - inner) / 2;
   if (m) {
     ctx.translate(x + off, y + off);
     ctx.scale(inner / 24, inner / 24);
     ctx.fillStyle = onPaper(m.hex);
-    ctx.fill(new Path2D(m.path));
+    for (const d of m.paths) ctx.fill(new Path2D(d));
   } else {
     const { text, color } = monogram(name);
     ctx.beginPath(); ctx.roundRect(x + off, y + off, inner, inner, 5);
