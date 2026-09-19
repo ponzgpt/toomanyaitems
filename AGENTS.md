@@ -4,7 +4,7 @@ One-page AI stack picker: nine slots, one tool per job. The product is the const
 ## Commands
 - Check (before every commit and deploy): `npm run check`
 - Dev: `npm run dev`
-- Deploy: `DEPLOYMENT.md`
+- Deploy: `./scripts/deploy.sh`
 
 ## Non-negotiables
 1. Nine slots, one per job: never allow two tools in a job, and compute/network (`src/data/infra.ts`) never grow the 3×3 grid.
